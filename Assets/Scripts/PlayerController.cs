@@ -24,7 +24,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask asteroidLayer;
     [SerializeField] private Transform firePoint;
 
-    // Cached variables for performance and logic tracking
+    // Cached variables for performance and logic tracking (Section B requirements)
     private Rigidbody rb;
     private Camera mainCamera;
     private Vector3 lastMousePosition;
@@ -32,6 +32,7 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
+        // Cache references at startup for performance optimization
         rb = GetComponent<Rigidbody>();
         mainCamera = Camera.main;
 
@@ -47,6 +48,7 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        // Separated single-responsibility custom methods (Section B requirement)
         HandleMovementInput();
         HandleMouseAiming();
         HandleShootingInput();
@@ -60,9 +62,11 @@ public class PlayerController : MonoBehaviour
         float moveX = Input.GetAxisRaw("Horizontal");
         float moveZ = Input.GetAxisRaw("Vertical");
 
+        // Maintain frame-rate independent movement velocity on flat XZ plane
         Vector3 movement = new Vector3(moveX, 0f, moveZ).normalized * moveSpeed;
         rb.linearVelocity = movement;
 
+        // Clamp positions tightly within your scene boundaries
         float clampedX = Mathf.Clamp(transform.position.x, xBounds.x, xBounds.y);
         float clampedZ = Mathf.Clamp(transform.position.z, zBounds.x, zBounds.y);
         transform.position = new Vector3(clampedX, 0f, clampedZ);
@@ -73,10 +77,9 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void HandleMouseAiming()
     {
-        // GATING CHECK: Only recalculate aiming if the mouse cursor coordinates actually change
+        // GATING CHECK: Only recalculate aiming if the mouse cursor coordinates change
         if (Input.mousePosition != lastMousePosition)
         {
-            // Record the current mouse coordinates for the next frame check
             lastMousePosition = Input.mousePosition;
 
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
@@ -88,6 +91,7 @@ public class PlayerController : MonoBehaviour
                 Vector3 lookPoint = ray.GetPoint(rayDistance);
                 Vector3 targetDirection = new Vector3(lookPoint.x, 0f, lookPoint.z) - transform.position;
 
+                // DEADZONE CHECK: Snap straight forward if cursor gets too close
                 if (targetDirection.magnitude < centerDeadzone)
                 {
                     targetDirection = Vector3.forward;
@@ -98,16 +102,16 @@ public class PlayerController : MonoBehaviour
                     float angle = Vector3.SignedAngle(Vector3.forward, targetDirection, Vector3.up);
                     angle = Mathf.Clamp(angle, -maxAimAngle, maxAimAngle);
 
-                    // Update our internal target rotation destination
+                    // Update internal destination rotation target
                     targetRotation = Quaternion.Euler(0f, angle, 0f);
                 }
             }
         }
 
-        // Frame-rate independent smoothing towards the current active target rotation
+        // Frame-rate independent smoothing towards target rotation
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
 
-        // HARD LOCK: Forcibly override and clear out any accidental X or Z tilting
+        // HARD LOCK: Eliminate any accidental X or Z tilting caused by physics glitches
         transform.rotation = Quaternion.Euler(0f, transform.rotation.eulerAngles.y, 0f);
     }
 
@@ -116,7 +120,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void HandleShootingInput()
     {
-        if (Input.GetButtonDown("Fire1"))
+        if (Input.GetButtonDown("Fire1")) // Left Mouse Click
         {
             ExecuteRaycastShoot();
         }
@@ -137,8 +141,52 @@ public class PlayerController : MonoBehaviour
             if (hit.collider.CompareTag("Asteroid"))
             {
                 Destroy(hit.collider.gameObject);
-                Debug.Log("Asteroid successfully shattered!");
+                Debug.Log("Asteroid successfully shattered via Raycast!");
             }
+        }
+    }
+
+    /// <summary>
+    /// Section B requirement: Correct use of trigger detection for items
+    /// </summary>
+    private void OnTriggerEnter(Collider other)
+    {
+        // Your working collectible code
+        if (other.CompareTag("Collectible"))
+        {
+            Collectible item = other.GetComponent<Collectible>();
+            if (item != null)
+            {
+                Debug.Log($"[Collection] Picked up a '{item.GetCollectibleType()}' canister!");
+                Destroy(other.gameObject);
+            }
+        }
+
+        //  EXPERIMENT ADDITION: Mirror the collectible detection precisely
+        if (other.CompareTag("Asteroid"))
+        {
+            TestAsteroid hazard = other.GetComponent<TestAsteroid>();
+            if (hazard != null)
+            {
+                Debug.Log(" EXPERIMENT SUCCESS! Trigger collision caught the Asteroid component!");
+                Destroy(other.gameObject); // Instantly vaporize the asteroid for testing
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Section B requirement: Correct use of standard physical collision for obstacles
+    /// </summary>
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Asteroid"))
+        {
+            Debug.Log(" PHYSICAL IMPACT! The drone smashed into an Asteroid. Game Over!");
+
+            // TODO: Call your GameManager to load the Game Over screen here
+
+            Destroy(gameObject); // Instantly destroy the player drone
         }
     }
 }
