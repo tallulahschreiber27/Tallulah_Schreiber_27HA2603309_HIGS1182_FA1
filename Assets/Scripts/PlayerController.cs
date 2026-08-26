@@ -151,28 +151,39 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void OnTriggerEnter(Collider other)
     {
-        // Your working collectible code
+        // 1. Collect Fuel Canister
         if (other.CompareTag("Collectible"))
         {
             Collectible item = other.GetComponent<Collectible>();
             if (item != null)
             {
                 Debug.Log($"[Collection] Picked up a '{item.GetCollectibleType()}' canister!");
+
+                // CONNECT TO GAMEMANAGER: Tell the manager to add 1 point to the score counter
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.AddScore(1);
+                }
+
                 Destroy(other.gameObject);
             }
         }
 
-        //  EXPERIMENT ADDITION: Mirror the collectible detection precisely
+        // 2. Crash into Asteroid
         if (other.CompareTag("Asteroid"))
         {
-            TestAsteroid hazard = other.GetComponent<TestAsteroid>();
-            if (hazard != null)
+            Debug.Log(" 3D Asteroid hit the Player!");
+
+            // CONNECT TO GAMEMANAGER: Tell the manager to trigger the Game Over scene swap
+            if (GameManager.Instance != null)
             {
-                Debug.Log(" EXPERIMENT SUCCESS! Trigger collision caught the Asteroid component!");
-                Destroy(other.gameObject); // Instantly vaporize the asteroid for testing
+                GameManager.Instance.TriggerGameOver();
             }
+
+            Destroy(gameObject);
         }
     }
+
 
 
     /// <summary>
