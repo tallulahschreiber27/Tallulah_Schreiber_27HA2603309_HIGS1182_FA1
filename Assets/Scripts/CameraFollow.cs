@@ -3,7 +3,7 @@ using UnityEngine;
 public class CameraFollow : MonoBehaviour
 {
     [Header("Target Tracking")]
-    [SerializeField] private Transform target; // Drag your Player_Drone here
+    [SerializeField] private Transform target; 
 
     [Header("Smoothing settings")]
     [Tooltip("Lower values mean smoother, lazier tracking. Higher values mean faster tracking.")]
@@ -33,18 +33,12 @@ public class CameraFollow : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Smoothly interpolates the camera's position to track the player drone.
-    /// </summary>
     private void FollowTarget()
     {
-        // Define our ideal destination position
         Vector3 desiredPosition = target.position + offset;
 
-        // Frame-rate independent smoothing using Vector3.Lerp (Section B requirement)
         Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
 
-        // Update the camera's position
         transform.position = smoothedPosition;
     }
 }

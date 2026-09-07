@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro; // Handles modern TextMeshPro UI elements
-
+using TMPro;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -25,7 +24,6 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        // Setup Singleton architecture safely
         if (Instance == null)
         {
             Instance = this;
@@ -61,12 +59,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Forces hidden defaults on all navigation overlay screens.
-    /// </summary>
     private void InitializeUI()
     {
-        // Enforce active execution state on startup
         Time.timeScale = 1f;
 
         if (pausePanel != null) pausePanel.SetActive(false);
@@ -74,9 +68,6 @@ public class GameManager : MonoBehaviour
         if (winPanel != null) winPanel.SetActive(false);
     }
 
-    /// <summary>
-    /// Custom single-responsibility scoring method (Section B requirement).
-    /// </summary>
     public void AddScore(int points)
     {
         if (!isGameActive) return;
@@ -91,9 +82,6 @@ public class GameManager : MonoBehaviour
             TriggerWinState();
         }
     }
-    /// <summary>
-    /// Allows external spawner managers to set the exact goal target dynamically at start.
-    /// </summary>
     public void SetTargetWinScore(int amount)
     {
         targetWinScore = amount;
@@ -108,82 +96,64 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Toggles the hardware clock loop freeze to manage pause breaks.
-    /// </summary>
     public void TogglePause()
     {
         isPaused = !isPaused;
 
         if (isPaused)
         {
-            Time.timeScale = 0f; // Halt physics engines completely
+            Time.timeScale = 0f; 
             if (pausePanel != null) pausePanel.SetActive(true);
             Debug.Log("[Game Loop] System execution paused by player.");
         }
         else
         {
-            Time.timeScale = 1f; // Restore normal processing speed
+            Time.timeScale = 1f; 
             if (pausePanel != null) pausePanel.SetActive(false);
             Debug.Log("[Game Loop] System execution resumed.");
         }
     }
 
-    /// <summary>
-    /// Custom method to initialize failure operations (Section B requirement).
-    /// </summary>
     public void TriggerGameOver()
     {
         if (!isGameActive) return;
 
         isGameActive = false;
-        Time.timeScale = 0f; // Freeze asteroid movement on screen behind overlay
+        Time.timeScale = 0f; 
 
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
         Debug.Log("[Game State] Drone hull compromised. Game Over display initialized.");
     }
 
-    /// <summary>
-    /// Custom method to initialize player victory operations.
-    /// </summary>
     private void TriggerWinState()
     {
         if (!isGameActive) return;
 
         isGameActive = false;
-        Time.timeScale = 0f; // Freeze hazards upon winning
+        Time.timeScale = 0f; 
 
         if (winPanel != null) winPanel.SetActive(true);
         Debug.Log("[Game State] Scavenger milestones completed. Victory menu displayed.");
     }
 
-    /// <summary>
-    /// Resets physics scale variables and refreshes the gameplay arena loop freshly.
-    /// </summary>
     public void RestartGame()
     {
         Debug.Log("GameManager: Re-initializing active gameplay arena scene elements.");
-        Time.timeScale = 1f; // CRUCIAL: Reset the clock speed so things move again!
+        Time.timeScale = 1f; 
         SceneManager.LoadScene(gameplayScene);
     }
 
-    /// <summary>
-    /// Universal button navigation command function to load back into MainMenu scene.
-    /// </summary>
     public void ReturnToMainMenu()
     {
         Debug.Log("GameManager: Exiting gameplay layout environment context.");
-        Time.timeScale = 1f; // CRUCIAL: Reset clock before exiting level context
+        Time.timeScale = 1f; 
         SceneManager.LoadScene(mainMenuScene);
     }
 
-    /// <summary>
-    /// NEW METHOD: Triggered by the Main Menu button to launch the game session.
-    /// </summary>
     public void StartGame()
     {
         Debug.Log($"GameManager: Loading core gameplay scene context: '{gameplayScene}'");
-        Time.timeScale = 1f; // Ensure physics run at full speed upon loading
+        Time.timeScale = 1f; 
         SceneManager.LoadScene(gameplayScene);
     }
 }

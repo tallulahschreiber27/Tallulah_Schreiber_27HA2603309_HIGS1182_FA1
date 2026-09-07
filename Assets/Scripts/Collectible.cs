@@ -16,15 +16,14 @@ public class Collectible : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // 1. Check if the collider is the player AND ensure it hasn't been processed yet
+        //Check if the collider is the player AND ensure it hasn't been processed yet
         if (other.CompareTag("Player") && !isCollected)
         {
-            // 2. Instantly trip the gate to true so no other trigger can pass through
             isCollected = true;
 
             Debug.Log($"[Collection] Player retrieved a {collectibleType} unit!");
 
-            // 3. Update the score exactly once
+            //Update the score exactly once (there was a bug where it doubled)
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.AddScore(1);
@@ -34,7 +33,7 @@ public class Collectible : MonoBehaviour
                 Debug.LogWarning("GameManager Instance is missing from the scene!");
             }
 
-            // 4. Remove the canister from the game space
+            //Remove the canister from the game space
             Destroy(gameObject);
         }
     }

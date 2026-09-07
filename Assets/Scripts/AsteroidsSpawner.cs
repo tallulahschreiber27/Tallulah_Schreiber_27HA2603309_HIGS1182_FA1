@@ -18,13 +18,12 @@ public class AsteroidsSpawner : MonoBehaviour
 
     [Header("Player Safety Buffer")]
     [SerializeField] private Transform playerTransform;
-    [SerializeField] private float safeDistanceZone = 10f; // Increased slightly for your larger map size
+    [SerializeField] private float safeDistanceZone = 10f; 
 
     [Header("Scatter Settings")]
-    [SerializeField] private Vector2 speedRange = new Vector2(5f, 15f); // Increased speed limits to fit a much larger field arena
+    [SerializeField] private Vector2 speedRange = new Vector2(5f, 15f); 
     [SerializeField] private float maxSidewaysScatter = 5f;
 
-    // Dynamic tracking array list
     private List<GameObject> activeAsteroids = new List<GameObject>();
 
     private void Start()
@@ -40,21 +39,18 @@ public class AsteroidsSpawner : MonoBehaviour
 
     private void Update()
     {
-        // 1. Monitor the list for missing references (destroyed by your physical boundary or player laser)
+        //Monitors the list for missing references (destroyed by the box collider physical boundary or player laser)
         MonitorActiveAsteroids();
 
-        // 2. Replenish missing items to keep a steady flow
+        //Replenish missing items to keep a steady flow
         MaintainAsteroidPopulation();
     }
 
-    /// <summary>
-    /// Checks the tracking array exclusively for null entries to safely clean up references.
-    /// </summary>
     private void MonitorActiveAsteroids()
     {
         for (int i = activeAsteroids.Count - 1; i >= 0; i--)
         {
-            // If the asteroid object is null, it was successfully destroyed by your physical box collider boundary or weapon
+            // If the asteroid object is null, it was successfully destroyed by the physical box collider boundary or weapon
             if (activeAsteroids[i] == null)
             {
                 activeAsteroids.RemoveAt(i);

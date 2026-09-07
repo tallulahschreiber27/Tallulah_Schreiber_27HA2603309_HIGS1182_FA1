@@ -10,7 +10,6 @@ public class CollectibleManager : MonoBehaviour
     [SerializeField] private int totalFuelCanistersToSpawn = 10;
 
     [Header("Spawning Boundaries")]
-    // Configured to match your exact arena map dimensions
     [SerializeField] private Vector2 xSpawnRange = new Vector2(-198f, 173f);
     [SerializeField] private Vector2 zSpawnRange = new Vector2(-157f, 168f);
 
