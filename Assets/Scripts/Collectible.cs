@@ -6,42 +6,39 @@ public class Collectible : MonoBehaviour
     [Tooltip("Allows you to classify what kind of item this is in the inspector.")]
     [SerializeField] private string collectibleType = "Fuel";
 
-    [Header("Movement Settings")]
-    [SerializeField] private float driftSpeed = 4f;
-
-    private Rigidbody rb;
+    // Safety Gate: Prevents double-counting from multi-script or multi-frame physics triggers
+    private bool isCollected = false;
 
     private void Start()
     {
-        // Section B requirement: Cache component for performance
-        rb = GetComponent<Rigidbody>();
-
-        if (rb != null)
-        {
-            rb.useGravity = false;
-            // Send the universal item drifting down the horizontal Z-axis
-            rb.linearVelocity = Vector3.back * driftSpeed;
-        }
-        else
-        {
-            Debug.LogError($"Collectible Error: Rigidbody missing on {gameObject.name}!");
-        }
+        Debug.Log($"[Spawn] {collectibleType} canister initialized and anchored safely.");
     }
 
-    private void OnTriggerExit(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        // Section B requirement: Correct use of trigger collision logic
-        // Clean up items that drift outside our active tracking box
-        if (other.CompareTag("GameplayBoundary"))
+        // 1. Check if the collider is the player AND ensure it hasn't been processed yet
+        if (other.CompareTag("Player") && !isCollected)
         {
-            Debug.Log($"[Cleanup] {collectibleType} item '{gameObject.name}' left the arena and self-destructed.");
+            // 2. Instantly trip the gate to true so no other trigger can pass through
+            isCollected = true;
+
+            Debug.Log($"[Collection] Player retrieved a {collectibleType} unit!");
+
+            // 3. Update the score exactly once
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.AddScore(1);
+            }
+            else
+            {
+                Debug.LogWarning("GameManager Instance is missing from the scene!");
+            }
+
+            // 4. Remove the canister from the game space
             Destroy(gameObject);
         }
     }
 
-    /// <summary>
-    /// Custom method to return what kind of item was collected (Rubric Requirement)
-    /// </summary>
     public string GetCollectibleType()
     {
         return collectibleType;

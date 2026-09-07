@@ -3,33 +3,36 @@ using UnityEngine;
 public class CollectibleManager : MonoBehaviour
 {
     [Header("Prefab Assignment")]
-    [SerializeField] private GameObject collectiblePrefab; // Drag your universal Collectible Prefab here
+    [SerializeField] private GameObject collectiblePrefab;
+
+    [Header("Finite Spawning Settings")]
+    [Tooltip("Change this number to choose exactly how many spawn at start!")]
+    [SerializeField] private int totalFuelCanistersToSpawn = 10;
 
     [Header("Spawning Boundaries")]
-    [SerializeField] private Vector2 xSpawnRange = new Vector2(-8f, 8f);
-    [SerializeField] private float zSpawnPosition = 10f;
+    // Configured to match your exact arena map dimensions
+    [SerializeField] private Vector2 xSpawnRange = new Vector2(-198f, 173f);
+    [SerializeField] private Vector2 zSpawnRange = new Vector2(-157f, 168f);
 
-    [Header("Timing Settings")]
-    [SerializeField] private float spawnRate = 3f;
-
-    private float nextSpawnTime = 0f;
-
-    private void Update()
+    private void Start()
     {
-        if (Time.time >= nextSpawnTime)
+        // Loops a fixed amount of times to load your exact target number
+        for (int i = 0; i < totalFuelCanistersToSpawn; i++)
         {
-            SpawnCollectible(); // Section B requirement: Custom single-responsibility method
-            nextSpawnTime = Time.time + spawnRate;
+            SpawnCollectible();
         }
+
+        Debug.Log($"CollectibleManager: Finite setup complete. Spawned {totalFuelCanistersToSpawn} canisters.");
+        GameManager.Instance.SetTargetWinScore(totalFuelCanistersToSpawn);
+
     }
 
     private void SpawnCollectible()
     {
         float randomX = Random.Range(xSpawnRange.x, xSpawnRange.y);
-        Vector3 spawnPosition = new Vector3(randomX, 0f, zSpawnPosition);
+        float randomZ = Random.Range(zSpawnRange.x, zSpawnRange.y);
+        Vector3 spawnPosition = new Vector3(randomX, 0.5f, randomZ);
 
         Instantiate(collectiblePrefab, spawnPosition, Quaternion.identity);
-
-        Debug.Log("Collectible Manager: Spawned an item prefab at " + spawnPosition);
     }
 }

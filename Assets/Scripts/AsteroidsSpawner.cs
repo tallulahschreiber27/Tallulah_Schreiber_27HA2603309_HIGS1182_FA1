@@ -1,44 +1,115 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class AsteroidsSpawner : MonoBehaviour
 {
     [Header("Prefab Assignment")]
-    [SerializeField] private GameObject asteroidPrefab; // Drag your Asteroid Prefab here
+    [SerializeField] private GameObject asteroidPrefab;
+
+    [Header("Spawning Count")]
+    [Tooltip("The exact number of asteroids that should always be present in the game.")]
+    [SerializeField] private int maxAsteroidsCount = 15;
 
     [Header("Spawning Boundaries")]
-    [Tooltip("The minimum and maximum X coordinates where asteroids can appear.")]
-    [SerializeField] private Vector2 xSpawnRange = new Vector2(-8f, 8f);
-    [Tooltip("The fixed Z coordinate above the top of the screen where asteroids spawn.")]
-    [SerializeField] private float zSpawnPosition = 10f;
+    [Tooltip("The minimum and maximum X coordinates taken from your inspector bounds.")]
+    [SerializeField] private Vector2 xSpawnRange = new Vector2(-198f, 173f);
+    [Tooltip("The minimum and maximum Z coordinates taken from your inspector bounds.")]
+    [SerializeField] private Vector2 zSpawnRange = new Vector2(-157f, 168f);
 
-    [Header("Timing Settings")]
-    [SerializeField] private float spawnRate = 2f; // Seconds between spawns
+    [Header("Player Safety Buffer")]
+    [SerializeField] private Transform playerTransform;
+    [SerializeField] private float safeDistanceZone = 10f; // Increased slightly for your larger map size
 
-    private float nextSpawnTime = 0f;
+    [Header("Scatter Settings")]
+    [SerializeField] private Vector2 speedRange = new Vector2(5f, 15f); // Increased speed limits to fit a much larger field arena
+    [SerializeField] private float maxSidewaysScatter = 5f;
+
+    // Dynamic tracking array list
+    private List<GameObject> activeAsteroids = new List<GameObject>();
+
+    private void Start()
+    {
+        if (playerTransform == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null) playerTransform = playerObj.transform;
+        }
+
+        MaintainAsteroidPopulation();
+    }
 
     private void Update()
     {
-        // Check game runtime loop clock to cycle waves periodically
-        if (Time.time >= nextSpawnTime)
-        {
-            SpawnObstacle(); // Section B requirement: Custom single-responsibility method
-            nextSpawnTime = Time.time + spawnRate;
-        }
+        // 1. Monitor the list for missing references (destroyed by your physical boundary or player laser)
+        MonitorActiveAsteroids();
+
+        // 2. Replenish missing items to keep a steady flow
+        MaintainAsteroidPopulation();
     }
 
     /// <summary>
-    /// Instantiates a randomized asteroid prefab along the top boundary axis.
+    /// Checks the tracking array exclusively for null entries to safely clean up references.
     /// </summary>
-    private void SpawnObstacle()
+    private void MonitorActiveAsteroids()
     {
-        // Calculate a randomized X coordinate along the designated spawn line
-        float randomX = Random.Range(xSpawnRange.x, xSpawnRange.y);
-        Vector3 spawnPosition = new Vector3(randomX, 0f, zSpawnPosition);
+        for (int i = activeAsteroids.Count - 1; i >= 0; i--)
+        {
+            // If the asteroid object is null, it was successfully destroyed by your physical box collider boundary or weapon
+            if (activeAsteroids[i] == null)
+            {
+                activeAsteroids.RemoveAt(i);
+            }
+        }
+    }
 
-        // Instantiate the asteroid at runtime (Section A requirement)
-        Instantiate(asteroidPrefab, spawnPosition, Quaternion.identity);
+    private void MaintainAsteroidPopulation()
+    {
+        while (activeAsteroids.Count < maxAsteroidsCount)
+        {
+            SpawnSingleAsteroid();
+        }
+    }
 
-        // Rubric requirement: Meaningful debug tracing log
-        Debug.Log("Obstacle Spawner: Instantiated asteroid at position " + spawnPosition);
+    public void SpawnSingleAsteroid()
+    {
+        Vector3 spawnPosition = Vector3.zero;
+        bool validPositionFound = false;
+        int attempts = 0;
+        int maxAttempts = 20;
+
+        while (!validPositionFound && attempts < maxAttempts)
+        {
+            float randomX = Random.Range(xSpawnRange.x, xSpawnRange.y);
+            float randomZ = Random.Range(zSpawnRange.x, zSpawnRange.y);
+            spawnPosition = new Vector3(randomX, 0f, randomZ);
+
+            if (playerTransform != null)
+            {
+                float distanceToPlayer = Vector3.Distance(spawnPosition, playerTransform.position);
+                if (distanceToPlayer >= safeDistanceZone)
+                {
+                    validPositionFound = true;
+                }
+            }
+            else
+            {
+                validPositionFound = true;
+            }
+
+            attempts++;
+        }
+
+        GameObject spawnedAsteroid = Instantiate(asteroidPrefab, spawnPosition, Quaternion.identity);
+        activeAsteroids.Add(spawnedAsteroid);
+
+        Rigidbody asteroidRb = spawnedAsteroid.GetComponent<Rigidbody>();
+        if (asteroidRb != null)
+        {
+            float randomSpeed = Random.Range(speedRange.x, speedRange.y);
+            float randomHorizontalScatter = Random.Range(-maxSidewaysScatter, maxSidewaysScatter);
+
+            float directionModifier = Random.value > 0.5f ? 1f : -1f;
+            asteroidRb.linearVelocity = new Vector3(randomHorizontalScatter, 0f, randomSpeed * directionModifier);
+        }
     }
 }

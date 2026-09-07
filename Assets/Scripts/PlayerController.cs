@@ -3,9 +3,11 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 10f;
-    [SerializeField] private Vector2 xBounds = new Vector2(-8f, 8f);
-    [SerializeField] private Vector2 zBounds = new Vector2(-4f, 4f);
+    [SerializeField] private float moveSpeed = 35f; // Increased speed slightly to match the massive map size scale!
+
+    // Updated default bounds to perfectly match your environment dimensions
+    [SerializeField] private Vector2 xBounds = new Vector2(-198f, 173f);
+    [SerializeField] private Vector2 zBounds = new Vector2(-157f, 168f);
 
     [Header("Aiming Settings")]
     [Tooltip("Controls how fast the ship rotates towards the mouse. Lower values make it smoother.")]
@@ -20,7 +22,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float centerDeadzone = 2.0f;
 
     [Header("Shooting Settings")]
-    [SerializeField] private float attackRange = 50f;
+    [SerializeField] private float attackRange = 150f; // Increased laser reach to account for the larger field map layout
     [SerializeField] private LayerMask asteroidLayer;
     [SerializeField] private Transform firePoint;
 
@@ -66,7 +68,7 @@ public class PlayerController : MonoBehaviour
         Vector3 movement = new Vector3(moveX, 0f, moveZ).normalized * moveSpeed;
         rb.linearVelocity = movement;
 
-        // Clamp positions tightly within your scene boundaries
+        // Clamp positions tightly within your custom scene boundaries
         float clampedX = Mathf.Clamp(transform.position.x, xBounds.x, xBounds.y);
         float clampedZ = Mathf.Clamp(transform.position.z, zBounds.x, zBounds.y);
         transform.position = new Vector3(clampedX, 0f, clampedZ);
@@ -134,7 +136,11 @@ public class PlayerController : MonoBehaviour
         Debug.Log("Player fired a laser bolt.");
         RaycastHit hit;
 
-        if (Physics.Raycast(firePoint.position, firePoint.forward, out hit, attackRange, asteroidLayer))
+        // Uses firePoint location vector to direct raycast vectors straight forward out into space
+        Vector3 rayOrigin = firePoint != null ? firePoint.position : transform.position;
+        Vector3 rayDirection = firePoint != null ? firePoint.forward : transform.forward;
+
+        if (Physics.Raycast(rayOrigin, rayDirection, out hit, attackRange, asteroidLayer))
         {
             Debug.Log($"Raycast Hit Target: {hit.collider.name}");
 
@@ -151,40 +157,13 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void OnTriggerEnter(Collider other)
     {
-        // 1. Collect Fuel Canister
-        if (other.CompareTag("Collectible"))
-        {
-            Collectible item = other.GetComponent<Collectible>();
-            if (item != null)
-            {
-                Debug.Log($"[Collection] Picked up a '{item.GetCollectibleType()}' canister!");
-
-                // CONNECT TO GAMEMANAGER: Tell the manager to add 1 point to the score counter
-                if (GameManager.Instance != null)
-                {
-                    GameManager.Instance.AddScore(1);
-                }
-
-                Destroy(other.gameObject);
-            }
-        }
-
-        // 2. Crash into Asteroid
+        // 1. Crash into Asteroid (Trigger alternative layout setup support)
         if (other.CompareTag("Asteroid"))
         {
-            Debug.Log(" 3D Asteroid hit the Player!");
-
-            // CONNECT TO GAMEMANAGER: Tell the manager to trigger the Game Over scene swap
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.TriggerGameOver();
-            }
-
-            Destroy(gameObject);
+            Debug.Log("3D Asteroid hit the Player via Trigger trigger zone!");
+            TriggerPlayerDeath();
         }
     }
-
-
 
     /// <summary>
     /// Section B requirement: Correct use of standard physical collision for obstacles
@@ -193,11 +172,25 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Asteroid"))
         {
-            Debug.Log(" PHYSICAL IMPACT! The drone smashed into an Asteroid. Game Over!");
-
-            // TODO: Call your GameManager to load the Game Over screen here
-
-            Destroy(gameObject); // Instantly destroy the player drone
+            Debug.Log("PHYSICAL IMPACT! The drone smashed into an Asteroid. Game Over!");
+            TriggerPlayerDeath();
         }
+    }
+
+    /// <summary>
+    /// Unified custom method to handle drone destruction and signal the game loop manager context.
+    /// </summary>
+    private void TriggerPlayerDeath()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.TriggerGameOver();
+        }
+        else
+        {
+            Debug.LogWarning("GameManager Instance is missing from the active runtime execution!");
+        }
+
+        Destroy(gameObject); // Instantly destroy the player drone asset unit
     }
 }

@@ -91,6 +91,14 @@ public class GameManager : MonoBehaviour
             TriggerWinState();
         }
     }
+    /// <summary>
+    /// Allows external spawner managers to set the exact goal target dynamically at start.
+    /// </summary>
+    public void SetTargetWinScore(int amount)
+    {
+        targetWinScore = amount;
+        UpdateScoreUI();
+    }
 
     private void UpdateScoreUI()
     {
